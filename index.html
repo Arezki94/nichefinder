@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NicheFinder v2.1 - Analyse Complète de Niches</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container { max-width: 1000px; margin: 0 auto; }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+    
+    .header h1 {
+      font-size: 42px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    
+    .header .version {
+      font-size: 14px;
+      opacity: 0.8;
+      margin-bottom: 12px;
+    }
+    
+    .header p {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      margin-bottom: 30px;
+    }
+    
+    .input-group {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    
+    input[type="text"] {
+      flex: 1;
+      padding: 16px 20px;
+      font-size: 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      transition: all 0.3s;
+    }
+    
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn {
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .examples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    
+    .example-chip {
+      padding: 8px 16px;
+      background: #f1f5f9;
+      border-radius: 20px;
+      font-size: 14px;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .example-chip:hover {
+      background: #e2e8f0;
+      transform: scale(1.05);
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #f3f4f6;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #f1f5f9;
+    }
+    
+    .result-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    
+    .score-badge {
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 24px;
+      font-weight: 800;
+    }
+    
+    .score-high { background: #dcfce7; color: #166534; }
+    .score-medium { background: #fef3c7; color: #92400e; }
+    .score-low { background: #fee2e2; color: #991b1b; }
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .metric-card {
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+      text-align: center;
+    }
+    
+    .metric-label {
+      font-size: 14px;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+    
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 8px 0;
+    }
+    
+    .metric-sub {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    
+    .trend-up { color: #059669; }
+    .trend-down { color: #dc2626; }
+    .trend-stable { color: #64748b; }
+    
+    .recommendation {
+      padding: 25px;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-radius: 12px;
+      margin-bottom: 30px;
+      line-height: 1.7;
+      color: #0f172a;
+    }
+    
+    .recommendation strong {
+      color: #0369a1;
+    }
+    
+    .chart-container {
+      margin: 30px 0;
+      padding: 25px;
+      background: #f8fafc;
+      border-radius: 12px;
+    }
+    
+    .chart-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 15px;
+    }
+    
+    .trend-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 120px;
+      padding: 10px 0;
+    }
+    
+    .trend-bar {
+      flex: 1;
+      background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      border-radius: 4px 4px 0 0;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+    
+    .trend-bar:hover {
+      opacity: 0.8;
+    }
+    
+    .serp-section {
+      margin: 30px 0;
+    }
+    
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 20px;
+    }
+    
+    .serp-item {
+      padding: 15px;
+      background: #f8fafc;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+    }
+    
+    .serp-item:hover {
+      background: #f1f5f9;
+      transform: translateX(5px);
+    }
+    
+    .serp-position {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      line-height: 30px;
+      text-align: center;
+      background: #667eea;
+      color: white;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      margin-right: 12px;
+    }
+    
+    .serp-domain {
+      font-size: 13px;
+      color: #475569;
+      margin-top: 6px;
+    }
+    
+    .dr-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+    
+    .dr-high { background: #fee2e2; color: #991b1b; }
+    .dr-medium { background: #fef3c7; color: #92400e; }
+    .dr-low { background: #dcfce7; color: #166534; }
+    
+    .bl-count {
+      margin-left: 8px;
+      font-size: 12px;
+      color: #64748b;
+    }
+    
+    .analysis-box {
+      padding: 20px;
+      background: #f0fdf4;
+      border-radius: 12px;
+      margin: 20px 0;
+    }
+    
+    .analysis-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .analysis-item {
+      font-size: 14px;
+      color: #0f172a;
+    }
+    
+    .longtail-section {
+      margin: 30px 0;
+      padding: 25px;
+      background: #fefce8;
+      border-radius: 12px;
+    }
+    
+    .longtail-item {
+      padding: 15px;
+      background: white;
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    
+    .longtail-keyword {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 6px;
+    }
+    
+    .longtail-metrics {
+      font-size: 13px;
+      color: #64748b;
+    }
+    
+    @media (max-width: 768px) {
+      .header h1 { font-size: 32px; }
+      .input-group { flex-direction: column; }
+      .metrics-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎯 NicheFinder</h1>
+      <div class="version">v2.1 COMPLETE</div>
+      <p>Analyse complète de niches e-commerce</p>
+    </div>
+    
+    <div class="card">
+      <div class="input-group">
+        <input 
+          type="text" 
+          id="keywordInput" 
+          placeholder="Ex: pommeau de vitesse cuir"
+          autocomplete="off"
+        />
+        <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeNiche()">
+          <span id="btnText">🚀 Analyser</span>
+        </button>
+      </div>
+      
+      <div class="examples">
+        <span class="example-chip" onclick="setKeyword('pommeau de vitesse cuir')">pommeau de vitesse cuir</span>
+        <span class="example-chip" onclick="setKeyword('bougie parfumée')">bougie parfumée</span>
+        <span class="example-chip" onclick="setKeyword('tapis de yoga')">tapis de yoga</span>
+        <span class="example-chip" onclick="setKeyword('housse de coussin')">housse de coussin</span>
+      </div>
+    </div>
+    
+    <div id="resultContainer"></div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin;
+    
+    function setKeyword(keyword) {
+      document.getElementById('keywordInput').value = keyword;
+      document.getElementById('keywordInput').focus();
+    }
+    
+    document.getElementById('keywordInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') analyzeNiche();
+    });
+    
+    function formatNumber(num) {
+      if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+      if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+      return num;
+    }
+    
+    async function analyzeNiche() {
+      const keyword = document.getElementById('keywordInput').value.trim();
+      const btn = document.getElementById('analyzeBtn');
+      const btnText = document.getElementById('btnText');
+      const resultContainer = document.getElementById('resultContainer');
+      
+      if (!keyword) {
+        alert('Veuillez entrer un mot-clé');
+        return;
+      }
+      
+      btn.disabled = true;
+      btnText.textContent = '⏳ Analyse en cours...';
+      resultContainer.innerHTML = `
+        <div class="card loading">
+          <div class="spinner"></div>
+          <p style="color: #64748b;">Analyse de "<strong>${keyword}</strong>" en cours...</p>
+          <p style="color: #94a3b8; font-size: 14px; margin-top: 10px;">
+            Collecte des données : Volume, CPC, DR, Backlinks, Long-tail...<br>
+            Cela peut prendre 30-60 secondes
+          </p>
+        </div>
+      `;
+      
+      try {
+        const response = await fetch(`${API_URL}/api/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keyword })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          displayResult(data.analysis);
+        } else {
+          resultContainer.innerHTML = `
+            <div class="card">
+              <p style="color: #dc2626; text-align: center;">❌ ${data.error}</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultContainer.innerHTML = `
+          <div class="card">
+            <p style="color: #dc2626; text-align: center;">❌ Erreur: ${error.message}</p>
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = '🚀 Analyser';
+      }
+    }
+    
+    // Suite dans le prochain bloc...
+    
+    function displayResult(analysis) {
+      console.log('📊 Analyse v2.1:', analysis);
+      
+      const scoreClass = analysis.score >= 70 ? 'score-high' : 
+                         analysis.score >= 50 ? 'score-medium' : 'score-low';
+      
+      const trendIcon = analysis.trend === 'up' ? '📈' : 
+                        analysis.trend === 'down' ? '📉' : '➡️';
+      
+      const trendClass = analysis.trend === 'up' ? 'trend-up' : 
+                         analysis.trend === 'down' ? 'trend-down' : 'trend-stable';
+      
+      const difficultyColor = analysis.difficulty >= 70 ? '#ef4444' : 
+                              analysis.difficulty >= 40 ? '#f59e0b' : '#10b981';
+      
+      // Graphique tendances
+      let trendChartHtml = '';
+      if (analysis.monthlyData && Object.keys(analysis.monthlyData).length > 0) {
+        const values = Object.values(analysis.monthlyData).filter(v => typeof v === 'number');
+        if (values.length > 0) {
+          const max = Math.max(...values);
+          trendChartHtml = `
+            <div class="chart-container">
+              <div class="chart-title">📈 Tendances 12 derniers mois</div>
+              <div class="trend-chart">
+                ${values.map(val => {
+                  const height = max > 0 ? (val / max * 100) : 50;
+                  return `<div class="trend-bar" style="height: ${height}%" title="${val}"></div>`;
+                }).join('')}
+              </div>
+              <div style="text-align: center; font-size: 12px; color: #64748b; margin-top: 10px;">
+                ${analysis.seasonal ? '⚠️ Produit saisonnier détecté' : 'Stable toute l\'année'}
+              </div>
+            </div>
+          `;
+        }
+      }
+      
+      // SERP avec DR et backlinks
+      const typeEmoji = {
+        'amazon': '🟠',
+        'generaliste': '🔴',
+        'specialiste': '🟡',
+        'media': '🔵',
+        'shopify': '🟢'
+      };
+      
+      const typeName = {
+        'amazon': 'Amazon',
+        'generaliste': 'Généraliste',
+        'specialiste': 'Spécialiste',
+        'media': 'Média',
+        'shopify': 'Shopify/Indép'
+      };
+      
+      let serpHtml = '';
+      if (analysis.serpData && analysis.serpData.length > 0) {
+        serpHtml = `
+          <div class="serp-section">
+            <div class="section-title">🏆 Top 10 Concurrents</div>
+            ${analysis.serpData.map(item => {
+              const drClass = item.dr > 50 ? 'dr-high' : item.dr > 30 ? 'dr-medium' : 'dr-low';
+              return `
+                <div class="serp-item">
+                  <span class="serp-position">#${item.position}</span>
+                  <strong style="color: #1e293b;">${item.title}</strong>
+                  <div class="serp-domain">
+                    ${typeEmoji[item.type] || '⚪'} ${typeName[item.type] || item.type}
+                    <strong> · ${item.domain}</strong>
+                    ${item.dr > 0 ? `<span class="dr-badge ${drClass}">DR ${item.dr}</span>` : ''}
+                    ${item.backlinks > 0 ? `<span class="bl-count">${formatNumber(item.backlinks)} backlinks</span>` : ''}
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+      
+      // Analyse concurrence
+      const serpAnalysis = analysis.serpAnalysis || {};
+      const counts = serpAnalysis.counts || {};
+      
+      // Calculer DR moyen
+      let drAvg = 0;
+      if (analysis.serpData) {
+        const drValues = analysis.serpData.map(s => s.dr || 0).filter(d => d > 0);
+        if (drValues.length > 0) {
+          drAvg = Math.round(drValues.reduce((a, b) => a + b, 0) / drValues.length);
+        }
+      }
+      
+      const analysisHtml = `
+        <div class="analysis-box">
+          <div class="section-title">📊 Analyse de la concurrence</div>
+          <div class="analysis-grid">
+            <div class="analysis-item">
+              ${serpAnalysis.amazonPresent ? 
+                `<strong style="color: #059669;">Amazon:</strong> Position ${serpAnalysis.amazonPosition}<br>
+                <small style="color: #64748b;">✅ Marché validé (mais concurrence prix féroce)</small>` : 
+                `<strong style="color: #dc2626;">Amazon:</strong> Absent<br>
+                <small style="color: #64748b;">⚠️ Marché peut-être trop petit</small>`
+              }
+            </div>
+            <div class="analysis-item">
+              <strong>Shopify/Indép:</strong> ${counts.shopify || 0}<br>
+              <small style="color: #64748b;">${serpAnalysis.accessiblePercent >= 40 ? '✅' : '⚠️'} ${serpAnalysis.accessiblePercent}% sites accessibles</small>
+            </div>
+            <div class="analysis-item">
+              <strong>Généralistes:</strong> ${counts.generaliste || 0}<br>
+              <small style="color: #64748b;">${counts.generaliste >= 5 ? '❌ Trop dominant' : counts.generaliste >= 3 ? '⚠️ Présence forte' : '✅ Limité'}</small>
+            </div>
+            <div class="analysis-item">
+              <strong>Spécialistes:</strong> ${counts.specialiste || 0}<br>
+              <small style="color: #64748b;">${counts.specialiste >= 5 ? '❌ Très établis' : counts.specialiste >= 3 ? '⚠️ Concurrence' : '✅ Gérable'}</small>
+            </div>
+            <div class="analysis-item">
+              <strong>DR moyen:</strong> ${drAvg}<br>
+              <small style="color: #64748b;">${drAvg < 30 ? '✅ Faible (battable)' : drAvg < 50 ? '⚠️ Moyen (faisable)' : '❌ Élevé (difficile)'}</small>
+            </div>
+            <div class="analysis-item">
+              <strong>Médias:</strong> ${counts.media || 0}<br>
+              <small style="color: #64748b;">${counts.media >= 3 ? '⚠️ Intent info' : '✅ Intent achat'}</small>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Long-tail
+      let longtailHtml = '';
+      if (analysis.longtailData && analysis.longtailData.length > 0) {
+        longtailHtml = `
+          <div class="longtail-section">
+            <div class="section-title">🎯 Opportunités Long-tail</div>
+            <p style="color: #64748b; margin-bottom: 15px; font-size: 14px;">
+              Niches plus spécifiques avec moins de concurrence
+            </p>
+            ${analysis.longtailData.slice(0, 5).map((lt, idx) => {
+              const comp = lt.competition > 0.66 ? 'High' : lt.competition > 0.33 ? 'Med' : 'Low';
+              return `
+                <div class="longtail-item">
+                  <div class="longtail-keyword">${idx + 1}. ${lt.keyword}</div>
+                  <div class="longtail-metrics">
+                    Volume: <strong>${lt.volume}</strong>/mois · 
+                    CPC: <strong>${lt.cpc.toFixed(2)}€</strong> · 
+                    Comp: <strong>${comp}</strong>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+      
+      document.getElementById('resultContainer').innerHTML = `
+        <div class="card result">
+          <div class="result-header">
+            <h2 class="result-title">${analysis.keyword}</h2>
+            <span class="score-badge ${scoreClass}">${analysis.score}/100</span>
+          </div>
+          
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-label">📊 Volume</div>
+              <div class="metric-value">${analysis.volume.toLocaleString()}<span style="font-size: 16px; color: #64748b;">/mois</span></div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-label">💰 CPC Moyen Réel</div>
+              <div class="metric-value">${analysis.cpcReal.toFixed(2)}€</div>
+              <div class="metric-sub">Range: ${analysis.lowBid.toFixed(2)}€ - ${analysis.highBid.toFixed(2)}€</div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-label">🎯 Difficulté SEO</div>
+              <div class="metric-value" style="color: ${difficultyColor}">${analysis.difficulty}/100</div>
+              <div class="metric-sub">Competition: ${analysis.competitionLevel}</div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-label">📈 Tendance</div>
+              <div class="metric-value ${trendClass}">
+                ${trendIcon} ${analysis.trendPercent > 0 ? '+' : ''}${analysis.trendPercent}%
+              </div>
+              <div class="metric-sub">${analysis.trend === 'up' ? 'Croissance' : analysis.trend === 'down' ? 'Déclin' : 'Stable'}</div>
+            </div>
+          </div>
+          
+          ${trendChartHtml}
+          
+          <div class="recommendation">
+            ${analysis.recommendation}
+          </div>
+          
+          ${analysisHtml}
+          
+          ${serpHtml}
+          
+          ${longtailHtml}
+          
+          <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 2px solid #f1f5f9;">
+            <button class="btn btn-primary" onclick="document.getElementById('keywordInput').value = ''; document.getElementById('keywordInput').focus();">
+              ✨ Analyser une autre niche
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
